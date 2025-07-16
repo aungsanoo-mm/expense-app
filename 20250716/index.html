@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monthly Expense Tracker</title>
+  <link rel="icon" type="image/png" href="static/favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+  <meta charset="UTF-8">
+  <title>Monthly Expense Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Monthly Expense Tracker</h1>
+
+    <!-- Expense Input Form -->
+    <form id="expense-form">
+      <input type="date" id="date" required>
+      <input type="text" id="details" placeholder="Details (e.g. Rice=2300,Taxi=6000)" required><br>
+      <input type="number" id="cat1" placeholder="1. Foods" required>
+      <input type="number" id="cat2" placeholder="2. Clothes" required>
+      <input type="number" id="cat3" placeholder="3. Family" required>
+      <input type="number" id="cat4" placeholder="4. Health" required>
+      <input type="number" id="cat5" placeholder="5. Others" required>
+      <input type="text" id="remarks" placeholder="Remarks (e.g. home_kitchen=500MMK)">
+      <input type="number" id="income" placeholder="Income (In)">
+      <button type="submit">Add</button>
+    </form>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Table Section -->
+      <div class="left-panel">
+        <table id="expense-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Details</th>
+              <th>1. Foods</th>
+              <th>2. Clothes</th>
+              <th>3. Family</th>
+              <th>4. Health</th>
+              <th>5. Others</th>
+              <th>Daily Total</th>
+              <th>Remarks</th>
+              <th>Income (In)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2"><strong>Monthly Total</strong></td>
+              <td id="sum1">0</td>
+              <td id="sum2">0</td>
+              <td id="sum3">0</td>
+              <td id="sum4">0</td>
+              <td id="sum5">0</td>
+              <td id="sumTotal"><strong>0</strong></td>
+              <td></td>
+              <td id="sumIncome"><strong>0</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Chart Section -->
+      <div class="right-panel">
+        <h2>Monthly Expense Chart</h2>
+        <canvas id="expenseChart" width="300" height="300"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
