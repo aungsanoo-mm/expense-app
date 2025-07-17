@@ -71,6 +71,7 @@ resource "aws_instance" "expense_app" {
             chown -R www-data:www-data /var/www/html/expense-tracker
             sudo cp -r /var/www/html/expense-tracker/expense.service /etc/systemd/system/
             # Install Python dependencies
+            pip install mysql-connector-python
             sudo pip3 install -r /var/www/html/expense-tracker/requirements.txt
             sudo pip3 install gunicorn
             # Configure Gunicorn service
