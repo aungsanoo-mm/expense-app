@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "5.0"
+      version = "6.0.0"
     }
   }
 }
@@ -14,7 +14,7 @@ provider "aws" {
 resource "aws_instance" "expense_app" {
   ami           = "ami-0b8607d2721c94a77"  # Ubuntu 22.04
   instance_type = "t2.micro"
-  key_name      = "mykeypair"             # Replace with your actual key pair
+  key_name      = "expenseapp"             # Replace with your actual key pair
 
     user_data = <<-EOF
             #!/bin/bash
