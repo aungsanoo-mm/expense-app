@@ -1,0 +1,126 @@
+---
+- name: Setup Expense Tracker Web Server
+  hosts: all
+  gather_facts: no
+  become: true
+
+  tasks:
+    - name: Clean apt cache
+      shell: |
+        apt-get clean
+        rm -rf /var/lib/apt/lists/*
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - nginx
+          - git
+          - mysql-server
+          - python3
+          - python3-pip
+          - python3-venv
+        state: present
+
+    - name: Enable and start Nginx
+      service:
+        name: nginx
+        enabled: yes
+        state: started
+
+    - name: Start MySQL service
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+    - name: Install Pymysql
+      pip:
+        name: PyMySQL
+        executable: pip3
+      become: true
+
+    - name: Wait for MySQL to be ready
+      shell: |
+        until mysqladmin ping; do
+          sleep 5
+        done
+      retries: 10
+      delay: 5
+      register: result
+      until: result.rc == 0
+    - name: Clone expense tracker repo
+      git:
+        repo: https://github.com/aungsanoo-mm/expense-app.git
+        dest: /var/www/html/expense-tracker
+        force: yes
+
+    - name: Set permissions
+      file:
+        path: /var/www/html/expense-tracker
+        owner: www-data
+        group: www-data
+        recurse: yes
+
+    - name: Copy Gunicorn service file
+      copy:
+        src: /home/aungsan/expense-app/myapp/expense.service
+        dest: /etc/systemd/system/expense.service
+        mode: '0644'
+
+    - name: Install Python dependencies
+      pip:
+        requirements: /var/www/html/expense-tracker/requirement.txt
+
+    - name: Install mysql-connector-python and gunicorn
+      pip:
+        name:
+          - mysql-connector-python
+          - gunicorn
+
+    - name: Create expenses_db database
+      mysql_db:
+        name: expenses_db
+        state: present
+
+    - name: Create MySQL user and grant privileges
+      mysql_user:
+        name: exp_user
+        password: StrongPassword123!
+        priv: 'expenses_db.*:ALL'
+        host: localhost
+        state: present
+
+    - name: Create expenses table
+      mysql_db:
+        name: expenses_db
+        state: import
+        target: /tmp/create_expenses.sql
+
+    - name: Copy SQL file to create expenses table
+      copy:
+        content: |
+          CREATE TABLE IF NOT EXISTS expenses (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            date DATE,
+            details TEXT,
+            cat1 FLOAT,
+            cat2 FLOAT,
+            cat3 FLOAT,
+            cat4 FLOAT,
+            cat5 FLOAT,
+            remarks TEXT,
+            income FLOAT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+        dest: /tmp/create_expenses.sql
+
+
+    - name: Reload systemd and start Gunicorn
+      systemd:
+        daemon_reload: yes
+        name: expense.service
+        enabled: yes
+        state: started
