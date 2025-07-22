@@ -3,6 +3,9 @@
   hosts: all
   gather_facts: no
   become: true
+  vars:
+    mysql_root_password: "root"
+
 
   tasks:
     - name: Clean apt cache
@@ -69,7 +72,22 @@
         src: /home/aungsan/expense-app/myapp/expense.service
         dest: /etc/systemd/system/expense.service
         mode: '0644'
-
+    - name: Copy Nginx defautl file
+      copy:
+        src: /home/aungsan/expense-app/myapp/expenseapp
+        dest: /etc/nginx/sites-available/
+        mode: '0644'
+    - name: Copy Nginx defautl file to site-enable 
+      copy:
+        src: /home/aungsan/expense-app/myapp/expenseapp
+        dest: /etc/nginx/sites-enabled/
+        mode: '0644'
+    - name: Replace default sites-enabled include with expense config
+      replace:
+        path: /etc/nginx/nginx.conf
+        regexp: 'include /etc/nginx/sites-enabled/\*;'
+        replace: 'include /etc/nginx/sites-enabled/expenseapp;'
+      notify: Restart nginx
     - name: Install Python dependencies
       pip:
         requirements: /var/www/html/expense-tracker/requirement.txt
@@ -79,11 +97,37 @@
         name:
           - mysql-connector-python
           - gunicorn
+    - name: Set MySQL root password and apply secure installation
+      debconf:
+        name: "mysql-server"
+        question: "mysql-server/root_password"
+        value: "{{ mysql_root_password }}"
+        vtype: "password"
 
+    - name: Confirm root password again
+      debconf:
+        name: "mysql-server"
+        question: "mysql-server/root_password_again"
+        value: "{{ mysql_root_password }}"
+        vtype: "password"
+
+    - name: Run mysql_secure_installation equivalent (disable remote root, remove test DB)
+      shell: |
+        mysql -u root <<EOF
+        ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ mysql_root_password }}';
+        DELETE FROM mysql.user WHERE User='';
+        DROP DATABASE IF EXISTS test;
+        DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+        FLUSH PRIVILEGES;
+        EOF
+      args:
+        executable: /bin/bash
     - name: Create expenses_db database
       mysql_db:
         name: expenses_db
         state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
 
     - name: Create MySQL user and grant privileges
       mysql_user:
@@ -92,12 +136,8 @@
         priv: 'expenses_db.*:ALL'
         host: localhost
         state: present
-
-    - name: Create expenses table
-      mysql_db:
-        name: expenses_db
-        state: import
-        target: /tmp/create_expenses.sql
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
 
     - name: Copy SQL file to create expenses table
       copy:
@@ -116,11 +156,21 @@
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           );
         dest: /tmp/create_expenses.sql
-
-
+    - name: Create expense table
+      mysql_db:
+        name: expenses_db
+        state: import
+        target: /tmp/create_expenses.sql
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
     - name: Reload systemd and start Gunicorn
       systemd:
         daemon_reload: yes
         name: expense.service
         enabled: yes
         state: started
+  handlers: 
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted

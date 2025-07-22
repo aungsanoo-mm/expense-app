@@ -16,7 +16,7 @@ resource "aws_instance" "expense_app" {
   instance_type = "t2.micro"
   key_name      = local.key_name
   tags = {
-    Name = "ExpenseApp"
+    Name = "Webapp"
   }
  provisioner "remote-exec" {
   inline = [ "echo 'echo ssh for ready' " ]
