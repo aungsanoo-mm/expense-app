@@ -59,9 +59,19 @@
         repo: https://github.com/aungsanoo-mm/expense-app.git
         dest: /var/www/html/expense-tracker
         force: yes
-    - name: Move app files to main directory
-      shell:  |
-        mv /var/www/html/expense-tracker/myapp/* /var/www/html/expense-tracker
+    - name: Copy selectd file to my app folder
+      copy:
+        src: "/var/www/html/expense-tracker/myapp/{{ item }}"
+        dest: "/var/www/html/expense-tracker/{{ item }}"
+        remote_src: yes
+      with_items:
+        - index.html
+        - app.py
+        - script.js
+        - style.css
+        - expense.service
+        - expense
+        - requirement.txt
   
     - name: Set permissions
       file:
@@ -72,29 +82,33 @@
 
     - name: Copy Gunicorn service file
       copy:
-        src: /home/aungsan/expense-app/myapp/expense.service
+        src: /var/www/html/expense-tracker/expense.service
         dest: /etc/systemd/system/expense.service
         mode: '0644'
+        remote_src: yes
     - name: Copy Nginx defautl file to /etc/nginx/sites-available/
       copy:
-        src: /home/aungsan/expense-app/myapp/expenseapp
+        src: /var/www/html/expense-tracker/expense
         dest: /etc/nginx/sites-available/
         mode: '0644'
+        remote_src: yes
     - name: Copy Nginx defautl file to site-enable 
       copy:
-        src: /home/aungsan/expense-app/myapp/expenseapp
+        src: /var/www/html/expense-tracker/expense
         dest: /etc/nginx/sites-enabled/
         mode: '0644'
+        remote_src: yes
     - name: Replace default sites-enabled include with expense config
       replace:
         path: /etc/nginx/nginx.conf
         regexp: 'include /etc/nginx/sites-enabled/\*;'
-        replace: 'include /etc/nginx/sites-enabled/expenseapp;'
+        replace: 'include /etc/nginx/sites-enabled/expense;'
       notify: Restart nginx
 
     - name: Install Python dependencies
       pip:
         requirements: /var/www/html/expense-tracker/requirement.txt
+      
     - name: Set MySQL root password and apply secure installation
       debconf:
         name: "mysql-server"
