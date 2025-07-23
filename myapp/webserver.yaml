@@ -59,7 +59,10 @@
         repo: https://github.com/aungsanoo-mm/expense-app.git
         dest: /var/www/html/expense-tracker
         force: yes
-
+    - name: Move app files to main directory
+      shell:  |
+        mv /var/www/html/expense-tracker/myapp/* /var/www/html/expense-tracker
+  
     - name: Set permissions
       file:
         path: /var/www/html/expense-tracker
@@ -72,7 +75,7 @@
         src: /home/aungsan/expense-app/myapp/expense.service
         dest: /etc/systemd/system/expense.service
         mode: '0644'
-    - name: Copy Nginx defautl file
+    - name: Copy Nginx defautl file to /etc/nginx/sites-available/
       copy:
         src: /home/aungsan/expense-app/myapp/expenseapp
         dest: /etc/nginx/sites-available/
@@ -88,15 +91,10 @@
         regexp: 'include /etc/nginx/sites-enabled/\*;'
         replace: 'include /etc/nginx/sites-enabled/expenseapp;'
       notify: Restart nginx
+
     - name: Install Python dependencies
       pip:
         requirements: /var/www/html/expense-tracker/requirement.txt
-
-    - name: Install mysql-connector-python and gunicorn
-      pip:
-        name:
-          - mysql-connector-python
-          - gunicorn
     - name: Set MySQL root password and apply secure installation
       debconf:
         name: "mysql-server"
