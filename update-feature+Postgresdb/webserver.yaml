@@ -1,0 +1,145 @@
+---
+- name: Setup Expense Tracker Web Server
+  hosts: all
+  gather_facts: no
+  become: true
+  vars:
+    mysql_root_password: "root"
+    ansible_python_interpreter: /usr/bin/python3
+
+
+  tasks:
+    - name: Clean apt cache
+      shell: |
+        apt-get clean
+        rm -rf /var/lib/apt/lists/*
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - nginx
+          - git
+          - python3
+          - python3-pip
+          - python3-venv
+          - libpq-dev
+          - python3-dev
+          - gcc
+          - supervisor
+        state: present
+
+    - name: Enable and start Nginx
+      service:
+        name: nginx
+        enabled: yes
+        state: started
+
+    # Removed all MySQL installation and wait tasks
+    - name: Clone expense tracker repo
+      git:
+        repo: https://github.com/aungsanoo-mm/expense-app.git
+        dest: /var/www/html/expense-tracker
+        force: yes
+    - name: copy update app.py
+      copy:
+        src: "/home/aungsan/Documents/expense-app/myapp/app.py"
+        dest: "/var/www/html/expense-tracker/app.py"
+        force: yes
+
+    - name: Copy selectd file to my app folder
+      copy:
+        src: "/var/www/html/expense-tracker/myapp/{{ item }}"
+        dest: "/var/www/html/expense-tracker/{{ item }}"
+        remote_src: yes
+      with_items:
+        - index.html
+        - app.py
+        - script.js
+        - style.css
+        - expense.service
+        - expense
+        - requirement.txt
+  
+    - name: Set permissions
+      file:
+        path: /var/www/html/expense-tracker
+        owner: www-data
+        group: www-data
+        recurse: yes
+
+    - name: Copy Gunicorn service file
+      copy:
+        src: /var/www/html/expense-tracker/expense.service
+        dest: /etc/systemd/system/expense.service
+        mode: '0644'
+        remote_src: yes
+    - name: Copy Nginx defautl file to /etc/nginx/sites-available/
+      copy:
+        src: /var/www/html/expense-tracker/expense
+        dest: /etc/nginx/sites-available/
+        mode: '0644'
+        remote_src: yes
+    - name: Copy Nginx defautl file to site-enable 
+      copy:
+        src: /var/www/html/expense-tracker/expense
+        dest: /etc/nginx/sites-enabled/
+        mode: '0644'
+        remote_src: yes
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-available/default
+        state: absent
+    - name: Replace default sites-enabled include with expense config
+      replace:
+        path: /etc/nginx/nginx.conf
+        regexp: 'include /etc/nginx/sites-enabled/\*;'
+        replace: 'include /etc/nginx/sites-enabled/expense;'
+      notify: Restart nginx
+
+    - name: Install Python dependencies
+      pip:
+        requirements: /var/www/html/expense-tracker/requirement.txt
+
+    - name: Ensure .env file exists for Flask app (RDS connection)
+      copy:
+        dest: /var/www/html/expense-tracker/.env
+        content: |
+          DB_HOST={{ RDS_ENDPOINT }}
+          DB_USER=exp_user
+          DB_PASSWORD=StrongPassword123!
+          DB_NAME=expenses_db
+        force: yes
+        mode: '0644'
+
+    - name: Ensure systemd override directory exists
+      file:
+        path: /etc/systemd/system/expense.service.d
+        state: directory
+        mode: '0755'
+
+    - name: Create systemd override for environment file
+      copy:
+        dest: /etc/systemd/system/expense.service.d/override.conf
+        content: |
+          [Service]
+          EnvironmentFile=/var/www/html/expense-tracker/.env
+      notify: Reload systemd
+    - name: Reload systemd and start Gunicorn
+      systemd:
+        daemon_reload: yes
+        name: expense.service
+        enabled: yes
+        state: started
+  handlers: 
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
