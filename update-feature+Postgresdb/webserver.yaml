@@ -3,11 +3,6 @@
   hosts: all
   gather_facts: no
   become: true
-  vars:
-    mysql_root_password: "root"
-    ansible_python_interpreter: /usr/bin/python3
-
-
   tasks:
     - name: Clean apt cache
       shell: |
@@ -44,25 +39,26 @@
         repo: https://github.com/aungsanoo-mm/expense-app.git
         dest: /var/www/html/expense-tracker
         force: yes
-    - name: copy update app.py
-      copy:
-        src: "/home/aungsan/Documents/expense-app/myapp/app.py"
-        dest: "/var/www/html/expense-tracker/app.py"
-        force: yes
 
     - name: Copy selectd file to my app folder
       copy:
-        src: "/var/www/html/expense-tracker/myapp/{{ item }}"
+        src: "/var/www/html/expense-tracker/update-feature+Postgresdb/{{ item }}"
         dest: "/var/www/html/expense-tracker/{{ item }}"
         remote_src: yes
       with_items:
-        - index.html
         - app.py
-        - script.js
-        - style.css
-        - expense.service
-        - expense
-        - requirement.txt
+        - expense-tracker.service
+        - requirements.txt
+    - name: Coyp templates folder to app directory
+      copy:
+        src: "/var/www/html/expense-tracker/update-feature+Postgresdb/templates"
+        dest: /var/www/html/expense-tracker/templates
+        remote_src: yes
+    - name: Coyp static folder to app directory
+      copy:
+        src: "/var/www/html/expense-tracker/update-feature+Postgresdb/static"
+        dest: /var/www/html/expense-tracker/static
+        remote_src: yes
   
     - name: Set permissions
       file:
@@ -73,8 +69,8 @@
 
     - name: Copy Gunicorn service file
       copy:
-        src: /var/www/html/expense-tracker/expense.service
-        dest: /etc/systemd/system/expense.service
+        src: /var/www/html/expense-tracker/expense-tracker.service
+        dest: /etc/systemd/system/expense-tracker.service
         mode: '0644'
         remote_src: yes
     - name: Copy Nginx defautl file to /etc/nginx/sites-available/
@@ -106,16 +102,15 @@
 
     - name: Install Python dependencies
       pip:
-        requirements: /var/www/html/expense-tracker/requirement.txt
-
-    - name: Ensure .env file exists for Flask app (RDS connection)
+        requirements: /var/www/html/expense-tracker/requirements.txt
+    - name: Ensure .env file exists for Flask app (RDS PostgreSQL connection)
       copy:
         dest: /var/www/html/expense-tracker/.env
         content: |
-          DB_HOST={{ RDS_ENDPOINT }}
-          DB_USER=exp_user
-          DB_PASSWORD=StrongPassword123!
-          DB_NAME=expenses_db
+          POSTGRES_HOST={{ postgres_host }}
+          POSTGRES_USER={{ postgres_user }}
+          POSTGRES_PASSWORD={{ postgres_password }}
+          POSTGRES_DB={{ postgres_db }}
         force: yes
         mode: '0644'
 
