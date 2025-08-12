@@ -51,12 +51,12 @@
     - name: Coyp templates folder to app directory
       copy:
         src: "/var/www/html/expense-tracker/update-feature+Postgresdb/templates"
-        dest: /var/www/html/expense-tracker/templates
+        dest: /var/www/html/expense-tracker/
         remote_src: yes
     - name: Coyp static folder to app directory
       copy:
         src: "/var/www/html/expense-tracker/update-feature+Postgresdb/static"
-        dest: /var/www/html/expense-tracker/static
+        dest: /var/www/html/expense-tracker/
         remote_src: yes
   
     - name: Set permissions
@@ -99,9 +99,6 @@
         replace: 'include /etc/nginx/sites-enabled/expense-nginx;'
       notify: Restart nginx
 
-    - name: Install Python dependencies
-      pip:
-        requirements: /var/www/html/expense-tracker/requirements.txt
     - name: Ensure .env file exists for Flask app (RDS PostgreSQL connection)
       copy:
         dest: /var/www/html/expense-tracker/.env
@@ -114,19 +111,30 @@
         force: yes
         mode: '0644'
 
+    - name: Create virtual environment
+      command: python3 -m venv /var/www/html/expense-tracker/venv
+      args:
+        creates: /var/www/html/expense-tracker/venv
+
+    - name: Install Python dependencies in virtualenv
+      pip:
+        requirements: /var/www/html/expense-tracker/requirements.txt
+        virtualenv: /var/www/html/expense-tracker/venv
+
     - name: Ensure systemd override directory exists
       file:
-        path: /etc/systemd/system/expense.service.d
+        path: /etc/systemd/system/expense-tracker.service.d
         state: directory
         mode: '0755'
 
     - name: Create systemd override for environment file
       copy:
-        dest: /etc/systemd/system/expense.service.d/override.conf
+        dest: /etc/systemd/system/expense-tracker.service.d/override.conf
         content: |
           [Service]
           EnvironmentFile=/var/www/html/expense-tracker/.env
       notify: Reload systemd
+
     - name: Reload systemd and start Gunicorn
       systemd:
         daemon_reload: yes
@@ -138,3 +146,8 @@
       service:
         name: nginx
         state: restarted
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+  

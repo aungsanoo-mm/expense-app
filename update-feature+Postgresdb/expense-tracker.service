@@ -1,4 +1,3 @@
-# /etc/systemd/system/expense-tracker.service
 [Unit]
 Description=Expense Tracker Flask App
 After=network.target
@@ -6,10 +5,10 @@ After=network.target
 [Service]
 User=ubuntu
 Group=ubuntu
-WorkingDirectory=/home/ubuntu/ExpenseFlow
-EnvironmentFile=/etc/expenseflow.env
-Environment="PATH=/home/ubuntu/ExpenseFlow/venv/bin:/usr/bin"
-ExecStart=/home/ubuntu/ExpenseFlow/venv/bin/gunicorn --workers 4 --timeout 300 --bind 0.0.0.0:5000 app:app
+WorkingDirectory=/var/www/html/expense-tracker
+# we will use the drop-in override for EnvironmentFile (.env)
+Environment="PATH=/var/www/html/expense-tracker/venv/bin:/usr/bin"
+ExecStart=/var/www/html/expense-tracker/venv/bin/gunicorn --workers 4 --timeout 300 --bind 0.0.0.0:5000 app:app
 Restart=always
 RestartSec=3
 
