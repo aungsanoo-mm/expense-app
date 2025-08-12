@@ -9,20 +9,36 @@ from flask_bcrypt import Bcrypt
 import psycopg2
 import psycopg2.extras
 from functools import wraps
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote_plus
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from jinja2 import TemplateNotFound
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-# --- Environment Check ---
-REQUIRED_ENV_VARS = ["DATABASE_URL"]
-missing = [v for v in REQUIRED_ENV_VARS if not os.environ.get(v)]
-if missing:
-    raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+# --- Environment Check & DB URL Construction ---
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-DATABASE_URL = os.environ["DATABASE_URL"]
+if not DATABASE_URL:
+    pg_host = os.environ.get("POSTGRES_HOST")
+    pg_user = os.environ.get("POSTGRES_USER")
+    pg_port = os.environ.get("POSTGRES_PORT", "5432")
+    pg_pass = os.environ.get("POSTGRES_PASSWORD")
+    pg_db   = os.environ.get("POSTGRES_DB")
+
+    missing = [name for name, val in {
+        "POSTGRES_HOST": pg_host,
+        "POSTGRES_USER": pg_user,
+        "POSTGRES_PASSWORD": pg_pass,
+        "POSTGRES_DB": pg_db,
+    }.items() if not val]
+    if missing:
+        raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+
+    # URL-encode password so special chars don't break the URL
+    encoded_pass = quote_plus(pg_pass)
+    DATABASE_URL = f"postgresql://{pg_user}:{encoded_pass}@{pg_host}:{pg_port}/{pg_db}"
+
 ADMIN_SETUP_TOKEN = os.environ.get("ADMIN_SETUP_TOKEN", "")  # optional secret to create/promote admin
 
 app = Flask(__name__)
@@ -543,4 +559,3 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-

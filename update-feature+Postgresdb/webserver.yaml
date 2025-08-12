@@ -23,7 +23,6 @@
           - python3-venv
           - libpq-dev
           - python3-dev
-          - gcc
           - supervisor
         state: present
 
@@ -75,13 +74,13 @@
         remote_src: yes
     - name: Copy Nginx defautl file to /etc/nginx/sites-available/
       copy:
-        src: /var/www/html/expense-tracker/expense
+        src: /var/www/html/expense-tracker/update-feature+Postgresdb/expense-nginx
         dest: /etc/nginx/sites-available/
         mode: '0644'
         remote_src: yes
     - name: Copy Nginx defautl file to site-enable 
       copy:
-        src: /var/www/html/expense-tracker/expense
+        src: /var/www/html/expense-tracker/update-feature+Postgresdb/expense-nginx
         dest: /etc/nginx/sites-enabled/
         mode: '0644'
         remote_src: yes
@@ -97,7 +96,7 @@
       replace:
         path: /etc/nginx/nginx.conf
         regexp: 'include /etc/nginx/sites-enabled/\*;'
-        replace: 'include /etc/nginx/sites-enabled/expense;'
+        replace: 'include /etc/nginx/sites-enabled/expense-nginx;'
       notify: Restart nginx
 
     - name: Install Python dependencies
@@ -109,6 +108,7 @@
         content: |
           POSTGRES_HOST={{ postgres_host }}
           POSTGRES_USER={{ postgres_user }}
+          POSTGRES_PORT={{ postgres_port }}
           POSTGRES_PASSWORD={{ postgres_password }}
           POSTGRES_DB={{ postgres_db }}
         force: yes
@@ -130,7 +130,7 @@
     - name: Reload systemd and start Gunicorn
       systemd:
         daemon_reload: yes
-        name: expense.service
+        name: expense-tracker.service
         enabled: yes
         state: started
   handlers: 

@@ -1,4 +1,3 @@
-
 terraform {
   required_providers {
     aws = {
@@ -9,15 +8,15 @@ terraform {
 }
 
 # --- RDS Security Group ---
-resource "aws_security_group" "rds_mysql" {
-  name        = "rds-mysql-sg"
-  description = "Allow MySQL from EC2 only"
+resource "aws_security_group" "rds_postgres" {
+  name        = "rds-postgres-sg"
+  description = "Allow Postgres from EC2 only"
 
   ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    security_groups = [aws_security_group.expense_new.id]
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.expense_demo.id]
   }
 
   egress {
@@ -28,19 +27,19 @@ resource "aws_security_group" "rds_mysql" {
   }
 }
 
-# --- RDS MySQL Instance ---
+# --- RDS Postgres Instance ---
 resource "aws_db_instance" "expense_rds" {
-  allocated_storage    = 20
-  engine               = "PostgreSQL"
-  engine_version       = "11.22-rds.20240418"
-  instance_class       = "db.t3.micro"
-  db_name              = "expenses_db"
-  username             = "exp_user"
-  password             = "StrongPassword123!"
-  parameter_group_name = "default:postgres-11"
-  skip_final_snapshot  = true
-  publicly_accessible  = false
-  vpc_security_group_ids = [aws_security_group.rds_mysql.id]
+  allocated_storage      = 20
+  engine                 = "postgres"
+  engine_version         = "11.22-rds.20240418"
+  instance_class         = "db.t3.micro"
+  db_name                = var.db_name
+  username               = var.db_username
+  password               = var.db_password
+  parameter_group_name   = "default.postgres11"
+  skip_final_snapshot    = true
+  publicly_accessible    = false
+  vpc_security_group_ids = [aws_security_group.rds_postgres.id]
 }
 
 # --- Output RDS Endpoint ---
@@ -53,14 +52,14 @@ provider "aws" {
 }
 
 resource "aws_instance" "expense_app" {
-  ami           = "ami-0b8607d2721c94a77"  # Ubuntu 22.04
+  ami           = "ami-0b8607d2721c94a77" # Ubuntu 22.04
   instance_type = "t2.micro"
   key_name      = local.key_name
   tags = {
     Name = "Webapp"
   }
   provisioner "remote-exec" {
-    inline = [ "echo 'echo ssh for ready' " ]
+    inline = ["echo 'echo ssh for ready' "]
     connection {
       type        = "ssh"
       user        = local.ssh_user
@@ -70,14 +69,14 @@ resource "aws_instance" "expense_app" {
   }
 
   provisioner "local-exec" {
-    command = "ansible-playbook -i '${aws_instance.expense_app.public_ip},' --private-key ${local.private_key_path} webserver.yaml -e RDS_ENDPOINT=${replace(aws_db_instance.expense_rds.endpoint, ":5432", "")}"
+    command = "ansible-playbook -i '${aws_instance.expense_app.public_ip},' --private-key ${local.private_key_path} webserver.yaml -e 'postgres_host=${replace(aws_db_instance.expense_rds.endpoint, ":5432", "")} postgres_port=${var.db_port} postgres_user=${var.db_username} postgres_password=${var.db_password} postgres_db=${var.db_name}'"
   }
 
-  vpc_security_group_ids = [aws_security_group.expense_new.id]
+  vpc_security_group_ids = [aws_security_group.expense_demo.id]
 }
 
-resource "aws_security_group" "expense_new" {
-  name        = "expense-new"
+resource "aws_security_group" "expense_demo" {
+  name        = "expense-demo"
   description = "Allow HTTP and SSH"
 
   ingress {
