@@ -66,6 +66,26 @@ resource "aws_db_instance" "expense_rds" {
   vpc_security_group_ids = [aws_security_group.rds_postgres.id]
 }
 
+data "aws_route53_zone" "selected" {
+  name         = "aungsanoo.org."
+  private_zone = false
+}
+
+resource "aws_route53_record" "expense_tracker_alias" {
+  zone_id = data.aws_route53_zone.selected.zone_id
+  name    = "expense-tracker.aungsanoo.org"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.expense_lb.dns_name
+    zone_id                = aws_lb.expense_lb.zone_id
+    evaluate_target_health = true
+  }
+
+  depends_on = [aws_lb.expense_lb]
+}
+
+
 # --- Output RDS Endpoint ---
 output "rds_endpoint" {
   value = aws_db_instance.expense_rds.endpoint
