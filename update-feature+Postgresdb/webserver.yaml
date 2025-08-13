@@ -74,16 +74,16 @@
         remote_src: yes
     - name: Copy Nginx defautl file to /etc/nginx/sites-available/
       copy:
-        src: /var/www/html/expense-tracker/update-feature+Postgresdb/expense-nginx
+        src: /home/aungsan/expense-app/update-feature+Postgresdb/expense-nginx
         dest: /etc/nginx/sites-available/
         mode: '0644'
-        remote_src: yes
+       #remote_src: yes
     - name: Copy Nginx defautl file to site-enable 
       copy:
-        src: /var/www/html/expense-tracker/update-feature+Postgresdb/expense-nginx
+        src: /home/aungsan/expense-app/update-feature+Postgresdb/expense-nginx
         dest: /etc/nginx/sites-enabled/
         mode: '0644'
-        remote_src: yes
+       #remote_src: yes
     - name: Remove default Nginx site
       file:
         path: /etc/nginx/sites-enabled/default
