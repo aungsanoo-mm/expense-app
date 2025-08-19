@@ -1,0 +1,5 @@
+postgres_host: "database-1.c3kgcie6mg54.ap-southeast-1.rds.amazonaws.com"
+postgres_user: "exp_user"
+postgres_password: "StrongPassword123!"
+postgres_db: "expenses_db"
+postgres_port: 5432

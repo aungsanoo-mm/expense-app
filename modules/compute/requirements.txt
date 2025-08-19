@@ -1,0 +1,12 @@
+Flask
+Flask-CORS
+mysql-connector-python
+flask-login
+flask-bcrypt
+gunicorn
+email-validator
+flask-sqlalchemy
+psycopg2-binary
+werkzeug
+python-dotenv
+email-validator

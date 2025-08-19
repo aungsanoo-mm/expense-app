@@ -1,0 +1,8 @@
+ansible-playbook -i '${public_ip},' \
+  --private-key ${private_key_path} \
+  ${path.module}/webserver.yaml \
+  -e "postgres_host=${db_host} \
+      postgres_port=${db_port} \
+      postgres_user=${db_user} \
+      postgres_password=${db_pass} \
+      postgres_db=${db_name}"
