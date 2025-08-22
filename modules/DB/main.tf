@@ -12,13 +12,14 @@ resource "aws_db_instance" "expense_rds" {
   publicly_accessible  = false
   multi_az             = var.db_multi_az
   port                 = var.db_port
-  # db_subnet_group_name   = [aws_db_subnet_group.database.name]
+  db_subnet_group_name   = aws_db_subnet_group.database.name
   vpc_security_group_ids = [var.db_sg_id]
+
 }
 
 resource "aws_db_subnet_group" "database" {
   name       = "db-subnet-group"
-  subnet_ids = [var.private_subnet_ids[0], var.private_subnet_ids[1]]
+  subnet_ids = var.private_subnet_ids
 
   tags = {
     Name = "db-subnet-group"

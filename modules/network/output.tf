@@ -8,7 +8,7 @@ output "private_subnet_ids" { value = module.vpc.private_subnets }
 output "alb_sg_id" { value = aws_security_group.alb_sg.id }
 output "bastion_sg_id" { value = aws_security_group.bastion_sg.id }
 output "webapp_a_sg_id" { value = aws_security_group.webapp_a_sg.id }
-output "webapp_b_sg_id" { value = aws_security_group.webapp_b_sg.id }
+# output "webapp_b_sg_id" { value = aws_security_group.webapp_b_sg.id }
 output "db_sg_id" { value = aws_security_group.db_sg.id }
 ############################################################
 #Output for ALB information

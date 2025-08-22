@@ -20,6 +20,7 @@ module "network" {
   lb_name                 = coalesce(var.lb_name, "${var.vpc_name}-alb")
   alb_internal            = var.alb_internal
   alb_deletion_protection = var.alb_deletion_protection
+  
 
   alb_http_enabled        = var.alb_http_enabled
   alb_https_enabled       = var.alb_https_enabled
@@ -48,18 +49,29 @@ module "route53" {
 # Compute Module
 module "compute" {
   source = "./compute"
+  #DB inputs
+  rds_endpoint =       module.DB.rds_endpoint
+  db_port               =  module.DB.db_port
+  db_address            =  module.DB.db_address
+  db_name                 = var.db_name
+  db_username             = var.db_username
+  db_password             = var.db_password
+  # db_port                 = var.db_port
 
   # Network inputs
   vpc_name           = var.vpc_name
-  public_subnet_ids  = module.network.private_subnet_ids
+  public_subnet_ids  = module.network.public_subnet_ids
   private_subnet_ids = module.network.private_subnet_ids
 
   # Security group inputs
   bastion_sg_id  = module.network.bastion_sg_id
-  webapp_b_sg_id = module.network.webapp_b_sg_id
+  # webapp_b_sg_id = module.network.webapp_b_sg_id
   webapp_a_sg_id = module.network.webapp_a_sg_id
   # # SSH configuration
   ssh_key_name = var.ssh_key_name
+  depends_on = [ module.DB ]
+  #Auto scalling group inputs
+  target_group_arn = module.network.target_group_arn
 }
 #########################################################
 # RDS Module
@@ -76,8 +88,8 @@ module "DB" {
   db_instance_class       = var.db_instance_class
   db_multi_az             = var.db_multi_az
   db_parameter_group_name = var.db_parameter_group_name
-  private_subnet_ids      = [module.network.private_subnet_ids[0], module.network.private_subnet_ids[1]]
-  # db_subnet_group_name    = module.DB.aws_db_subnet_group.database.name
+  private_subnet_ids      = module.network.private_subnet_ids
+  vpc_id                 = module.network.vpc_id
   # Pass the security group ID for the RDS instance
   db_sg_id = module.network.db_sg_id
 }

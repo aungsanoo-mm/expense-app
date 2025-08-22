@@ -12,7 +12,7 @@ variable "enable_dns_hostnames" { type = bool }
 variable "enable_dns_support" { type = bool }
 variable "map_public_ip_on_launch" { type = bool }
 #########################################################
-# ALB settings
+# ALB & ACM settings
 
 variable "lb_name" {
   description = "Name of the Application Load Balancer"
@@ -55,6 +55,7 @@ variable "certificate_arn" {
   description = "ARN of the SSL certificate for HTTPS listener"
   type        = string
   default     = null
+  sensitive  = true
 
 }
 variable "ssl_policy" {
@@ -118,6 +119,23 @@ variable "db_port" {
 variable "bastion_ssh_cidrs" {
   description = "CIDRs allowed to SSH to bastion"
   type        = list(string)
-  default     = ["0.0.0.0/0"] # tighten to your office IP(s) in prod
+  default     = ["0.0.0.0/0"] 
+}
+variable "myapp" {
+  description = "Allow my application to acceess from ALB"
+  type = number
+  default = 5000
+}
+variable "domain_name" {
+  description = "Domain name for the application"
+  type        = string
+  default     = "aungsanoo.org"
+  
+}
+variable "http_redirect_to_https" {
+  description = "Enable HTTPS for the ALB"
+  type        = bool
+  default     = true
+  
 }
 ##############################################################  

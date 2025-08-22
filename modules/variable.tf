@@ -133,14 +133,17 @@ variable "ssh_key_name" {
 #DB settings
 variable "db_name" {
   description = "The name of the database to create"
+  sensitive = true
   type        = string
 }
 variable "db_password" {
   description = "value of the database password"
+  sensitive = true
   type        = string
 }
 variable "db_username" {
   description = "value of the database username"
+  sensitive = true
   type        = string
 }
 
@@ -175,3 +178,15 @@ variable "db_allocated_storage" {
   description = "The amount of storage (in GB) to allocate for the RDS instance"
   type        = number
 }
+
+variable "rds_endpoint" {
+  description = "The endpoint of the RDS instance"
+  type        = string
+  default     = null
+  
+}
+# variable "subnet_group_name" {
+#   description = "The name of the DB subnet group to associate with the RDS instance"
+#   type        = string
+  
+# }

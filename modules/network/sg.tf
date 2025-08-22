@@ -19,7 +19,7 @@ resource "aws_security_group" "bastion_sg" {
   tags = { Name = "${var.vpc_name}-bastion-sg" }
 }
 
-# inbound: SSH from anywhere (adjust to your office IP range in prod)
+# inbound: SSH from anywhere 
 resource "aws_security_group_rule" "bastion_ssh_in" {
   type              = "ingress"
   security_group_id = aws_security_group.bastion_sg.id
@@ -104,45 +104,65 @@ resource "aws_security_group_rule" "webapp_a_http_from_alb" {
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.alb_sg.id
 }
-
-########################
-# Webapp B (private)
-########################
-resource "aws_security_group" "webapp_b_sg" {
-  name        = "${var.vpc_name}-webapp-b-sg"
-  description = "Webapp B security group (private)"
-  vpc_id      = module.vpc.vpc_id
-
-  # outbound: all
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = { Name = "${var.vpc_name}-webapp-b-sg" }
-}
-
-# SSH from bastion only
-resource "aws_security_group_rule" "webapp_b_ssh_from_bastion" {
+# Allow my application to access from ALB
+resource "aws_security_group_rule" "webapp_a_myapp_from_alb" {
   type                     = "ingress"
-  security_group_id        = aws_security_group.webapp_b_sg.id
-  from_port                = var.ssh_port
-  to_port                  = var.ssh_port
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.bastion_sg.id
-}
-
-# HTTP from ALB only
-resource "aws_security_group_rule" "webapp_b_http_from_alb" {
-  type                     = "ingress"
-  security_group_id        = aws_security_group.webapp_b_sg.id
-  from_port                = var.web_port
-  to_port                  = var.web_port
+  security_group_id        = aws_security_group.webapp_a_sg.id
+  from_port                = var.myapp
+  to_port                  = var.myapp
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.alb_sg.id
 }
+
+
+# ########################
+# # Webapp B (private)
+# ########################
+# resource "aws_security_group" "webapp_b_sg" {
+#   name        = "${var.vpc_name}-webapp-b-sg"
+#   description = "Webapp B security group (private)"
+#   vpc_id      = module.vpc.vpc_id
+
+#   # outbound: all
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   tags = { Name = "${var.vpc_name}-webapp-b-sg" }
+# }
+
+# # SSH from bastion only
+# resource "aws_security_group_rule" "webapp_b_ssh_from_bastion" {
+#   type                     = "ingress"
+#   security_group_id        = aws_security_group.webapp_b_sg.id
+#   from_port                = var.ssh_port
+#   to_port                  = var.ssh_port
+#   protocol                 = "tcp"
+#   source_security_group_id = aws_security_group.bastion_sg.id
+# }
+
+# # HTTP from ALB only
+# resource "aws_security_group_rule" "webapp_b_http_from_alb" {
+#   type                     = "ingress"
+#   security_group_id        = aws_security_group.webapp_b_sg.id
+#   from_port                = var.web_port
+#   to_port                  = var.web_port
+#   protocol                 = "tcp"
+#   source_security_group_id = aws_security_group.alb_sg.id
+# }
+# ## Allow my application to access from ALB
+# resource "aws_security_group_rule" "webapp_b_myapp_from_alb" {
+#   type                     = "ingress"
+#   security_group_id        = aws_security_group.webapp_b_sg.id
+#   from_port                = var.myapp
+#   to_port                  = var.myapp
+#   protocol                 = "tcp"
+#   source_security_group_id = aws_security_group.alb_sg.id
+# }
+
 
 ########################
 # Database (private)
@@ -173,12 +193,12 @@ resource "aws_security_group_rule" "db_from_webapp_a" {
   source_security_group_id = aws_security_group.webapp_a_sg.id
 }
 
-# DB 5432 only from Webapp B
-resource "aws_security_group_rule" "db_from_webapp_b" {
-  type                     = "ingress"
-  security_group_id        = aws_security_group.db_sg.id
-  from_port                = var.db_port
-  to_port                  = var.db_port
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.webapp_b_sg.id
-}
+# # DB 5432 only from Webapp B
+# resource "aws_security_group_rule" "db_from_webapp_b" {
+#   type                     = "ingress"
+#   security_group_id        = aws_security_group.db_sg.id
+#   from_port                = var.db_port
+#   to_port                  = var.db_port
+#   protocol                 = "tcp"
+#   source_security_group_id = aws_security_group.webapp_b_sg.id
+# }

@@ -6,3 +6,11 @@ output "db_subnet_group_name" {
   value = aws_db_subnet_group.database.name
 
 }
+output "db_address" {
+  value= aws_db_instance.expense_rds.address
+}
+
+output "db_port" {
+  value = aws_db_instance.expense_rds.port
+  
+}

@@ -4,10 +4,12 @@ variable "db_name" {
 }
 variable "db_password" {
   description = "value of the database password"
+  sensitive = true
   type        = string
 }
 variable "db_username" {
   description = "value of the database username"
+  sensitive = true
   type        = string
 }
 variable "db_sg_id" {
@@ -53,4 +55,9 @@ variable "vpc_name" {
 variable "private_subnet_ids" {
   description = "List of private subnet IDs for the RDS instance"
   type        = list(string)
+}
+variable "vpc_id" {
+  description = "The ID of the VPC where the RDS instance will be created"
+  type        = string
+  
 }
