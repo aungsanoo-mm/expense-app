@@ -14,24 +14,31 @@ module "vpc" {
   enable_dns_hostnames    = var.enable_dns_hostnames
   enable_dns_support      = var.enable_dns_support
   map_public_ip_on_launch = var.map_public_ip_on_launch
-  # Global VPC tag
-  tags = {
-    Name = var.vpc_name
-  }
 
   # Uniform tags for all subnets/route tables
   public_subnet_tags = {
     Tier = "public"
+    Name = "${var.vpc_name}-public-subnets"
   }
   private_subnet_tags = {
     Tier = "private"
+    Name = "${var.vpc_name}-private-subnets"
   }
   public_route_table_tags = {
     Scope = "public"
+    Name  = "${var.vpc_name}-public-rt"
   }
   private_route_table_tags = {
     Scope = "private"
+    Name  = "${var.vpc_name}-private-rt"
   }
+  nat_gateway_tags = {
+    Name = "${var.vpc_name}-nat-gw"
+  }
+  igw_tags = {
+    Name = "${var.vpc_name}-igw"
+  }
+
 }
 
 
